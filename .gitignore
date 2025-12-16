@@ -21,3 +21,7 @@ __pycache__/
 # OS
 # =====================
 .DS_Store
+
+# Local data + installs (do not commit)
+music-atlas-data/
+music-atlas-frontend-v3/node_modules/
