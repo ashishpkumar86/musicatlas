@@ -16,3 +16,23 @@ __pycache__/
 
 # OS
 .DS_Store
+
+# Node / Next
+node_modules/
+backend/
+backend/music-atlas-frontend-v3/node_modules/
+.next/
+out/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
