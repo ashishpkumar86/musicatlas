@@ -227,12 +227,14 @@ const LoginCard = ({ title, status, items, emptyText, cta, onRefresh }: LoginCar
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button
-          onClick={cta}
-          className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-canvas transition hover:bg-accentMuted"
-        >
-          Log in with {title}
-        </button>
+        {status !== 'ready' ? (
+          <button
+            onClick={cta}
+            className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-canvas transition hover:bg-accentMuted"
+          >
+            Log in with {title}
+          </button>
+        ) : null}
         <button
           onClick={onRefresh}
           className="rounded-full border border-white/10 px-3 py-2 text-sm text-textMuted transition hover:border-accent hover:text-textPrimary"

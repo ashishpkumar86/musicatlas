@@ -1,0 +1,11 @@
+Project: Music Atlas. FastAPI backend (port 8000) + Next.js frontend v3 (port 3000), with an older static frontend v2.
+
+Backend: entry app/main.py; routes /auth, /spotify, /tidal, /mb, /user. Sessions are in-memory (music_atlas_session cookie, app/utils/config.py::SESSIONS). OAuth callbacks handled by backend.
+
+OAuth: PKCE for Spotify/TIDAL. Env variables: FRONTEND_URL=http://127.0.0.1 (line 3000), CORS_ORIGINS=http://127.0.0.1 (line 3000), SPOTIFY_CLIENT_ID/SECRET, SPOTIFY_REDIRECT_URI=http://127.0.0.1:8000/auth/spotify/callback, TIDAL_CLIENT_ID/SECRET, TIDAL_REDIRECT_URI=http://127.0.0.1:8000/auth/tidal/callback, MB_SOURCE=api, APP_ENV=dev. Backend must be restarted after changing env.
+
+Key endpoints: /auth/spotify/login|callback, /auth/tidal/login|callback, /auth/spotify/session, /auth/tidal/session, /spotify/top-artists, /spotify/artist/{id}, /tidal/favorites/artists.
+
+Frontend v3: Next.js in music-atlas-frontend-v3, page /ingest uses SourceLoginPanel to hit those endpoints with credentials: include. Mock data for maps lives in src/mock/userMap.ts. NEXT_PUBLIC_API_BASE_URL should point to http://127.0.0.1:8000 for local dev.
+
+Status: Both Spotify and TIDAL login flows confirmed working locally with the correct client IDs and 8000-based callbacks; artists load on /ingest.
