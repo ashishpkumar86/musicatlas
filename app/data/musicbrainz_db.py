@@ -68,10 +68,12 @@ def search_artists_by_name_db(
     for row in rows:
         gid = row.get("gid")
         gid_str = str(gid) if gid else None
+        internal_id = row.get("id")
         results.append(
             {
                 "id": gid_str,
                 "gid": gid_str,
+                "mb_internal_id": internal_id,
                 "name": row.get("name"),
                 "sort-name": row.get("sort_name"),
                 "type": row.get("type"),
@@ -113,9 +115,11 @@ def get_artist_by_mbid_db(mbid: str) -> Optional[Dict[str, Any]]:
     row = rows[0]
     gid = row.get("gid")
     gid_str = str(gid) if gid else None
+    internal_id = row.get("id")
     return {
         "id": gid_str,
         "gid": gid_str,
+        "mb_internal_id": internal_id,
         "name": row.get("name"),
         "sort-name": row.get("sort_name"),
         "type": row.get("type"),

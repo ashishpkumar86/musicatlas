@@ -18,6 +18,11 @@ type TidalArtist = {
   popularity?: number | null;
 };
 
+type SonicTag = {
+  name: string;
+  score?: number | null;
+};
+
 type SessionBase = {
   logged_in: boolean;
   [key: string]: unknown;
@@ -41,6 +46,14 @@ const formatExpiry = (value?: number | null) => {
   const date = new Date(value * 1000);
   if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleString();
+};
+
+const normalizePopularity = (value: unknown) => {
+  if (value === null || value === undefined) return null;
+  const num = Number(value);
+  if (Number.isNaN(num)) return null;
+  if (num <= 1) return Math.round(num * 100);
+  return Math.round(Math.min(100, Math.max(0, num)));
 };
 
 const formatValue = (key: string, value: unknown) => {
@@ -207,11 +220,14 @@ export default function DataCheckPage() {
   const [tidalSession, setTidalSession] = useState<TidalSession | null>(null);
   const [spotifyArtists, setSpotifyArtists] = useState<SpotifyArtist[]>([]);
   const [tidalArtists, setTidalArtists] = useState<TidalArtist[]>([]);
+  const [tagCloud, setTagCloud] = useState<SonicTag[]>([]);
   const [status, setStatus] = useState<{ spotify: 'idle' | 'loading' | 'ready' | 'error'; tidal: 'idle' | 'loading' | 'ready' | 'error' }>({
     spotify: 'idle',
     tidal: 'idle'
   });
   const [error, setError] = useState<string | null>(null);
+  const [tagStatus, setTagStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [tagError, setTagError] = useState<string | null>(null);
 
   const loadSpotify = async () => {
     setStatus((s) => ({ ...s, spotify: 'loading' }));
@@ -275,6 +291,49 @@ export default function DataCheckPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const buildSonicTags = async () => {
+    setTagStatus('loading');
+    setTagError(null);
+
+    const payload = [
+      ...spotifyArtists.map((artist) => ({
+        name: artist.name,
+        source: 'spotify',
+        source_id: artist.id,
+        country_code: null,
+        popularity: normalizePopularity(artist.popularity),
+        genres: Array.isArray(artist.genres) ? artist.genres : []
+      })),
+      ...tidalArtists.map((artist) => ({
+        name: artist.name,
+        source: 'tidal',
+        source_id: artist.id,
+        country_code: null,
+        popularity: normalizePopularity(artist.popularity),
+        genres: []
+      }))
+    ];
+
+    if (payload.length === 0) {
+      setTagError('No artists loaded yet. Log in and refresh first.');
+      setTagStatus('error');
+      return;
+    }
+
+    try {
+      const data = await apiFetch<{ tag_cloud?: SonicTag[] }>('/user/sonic-tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      setTagCloud(data.tag_cloud || []);
+      setTagStatus('ready');
+    } catch (err) {
+      setTagStatus('error');
+      setTagError((err as Error).message);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -315,6 +374,57 @@ export default function DataCheckPage() {
           showPopularity
           onRefresh={loadTidal}
         />
+      </div>
+
+      <div className="rounded-2xl border border-white/5 bg-panel/70 p-6 shadow-xl shadow-black/30">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <p className="text-xs uppercase tracking-[0.2em] text-textMuted">Sonic tag cloud</p>
+            <span className="text-lg font-semibold text-textPrimary">Blend your artists into tags</span>
+            <p className="text-sm text-textMuted">Uses all loaded Spotify + TIDAL artists to build a tag cloud.</p>
+          </div>
+          <button
+            onClick={buildSonicTags}
+            className="rounded-full bg-accent px-5 py-2 text-sm font-semibold text-canvas transition hover:bg-accentMuted disabled:opacity-60"
+            disabled={tagStatus === 'loading'}
+          >
+            {tagStatus === 'loading' ? 'Building...' : 'Build Sonic Tag Cloud'}
+          </button>
+        </div>
+
+        {tagError ? (
+          <div className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-rose-100">{tagError}</div>
+        ) : null}
+
+        <div className="mt-4 min-h-[120px] rounded-xl border border-white/10 bg-black/20 p-4">
+          {tagStatus === 'idle' && tagCloud.length === 0 ? (
+            <p className="text-sm text-textMuted">Click build to generate your tag cloud.</p>
+          ) : null}
+          {tagStatus === 'loading' ? <p className="text-sm text-textMuted">Building tags...</p> : null}
+          {tagStatus === 'ready' && tagCloud.length === 0 ? (
+            <p className="text-sm text-textMuted">No tags returned for your current artists.</p>
+          ) : null}
+          {tagCloud.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {tagCloud.map((tag) => {
+                const score = typeof tag.score === 'number' ? tag.score : 0;
+                const size =
+                  score >= 0.75 ? 'text-xl' : score >= 0.4 ? 'text-lg' : 'text-base';
+                return (
+                  <span
+                    key={tag.name}
+                    className={`rounded-full bg-white/10 px-3 py-1 font-medium text-textPrimary ${size}`}
+                  >
+                    {tag.name}
+                    {typeof tag.score === 'number' ? (
+                      <span className="ml-2 text-xs text-textMuted">{tag.score.toFixed(2)}</span>
+                    ) : null}
+                  </span>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.clients.musicbrainz_client import search_artist_summary as mb_search_artist_summary
 from app.clients.tidal_client import TidalAuthError, get_access_token
-from app.routers import auth, enrichment, musicbrainz, spotify, tidal
+from app.routers import auth, enrichment, musicbrainz, spotify, tidal, recs
 from app.utils.config import CORS_ORIGINS, FRONTEND_DIR, FRONTEND_URL
 
 app = FastAPI(
@@ -27,6 +27,7 @@ app.include_router(spotify.router, prefix="/spotify")
 app.include_router(musicbrainz.router, prefix="/mb")
 app.include_router(enrichment.router, prefix="/user")
 app.include_router(enrichment.public_router)
+app.include_router(recs.router, prefix="/recs")
 
 # ---------------------------------------------------------------------------
 # CORS (local dev only)
@@ -110,4 +111,3 @@ app.mount(
     StaticFiles(directory=str(FRONTEND_DIR), html=False),
     name="static",
 )
-

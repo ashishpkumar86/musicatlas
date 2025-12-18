@@ -1,0 +1,148 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2865
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 HelveticaNeue;\f1\fnil\fcharset0 Menlo-Regular;\f2\fnil\fcharset0 .AppleSystemUIFontMonospaced-Regular;
+}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red255\green255\blue255;\red193\green193\blue193;
+\red224\green129\blue13;\red20\green153\blue108;\red64\green153\blue253;}
+{\*\expandedcolortbl;;\cssrgb\c0\c1\c1;\cssrgb\c100000\c100000\c99985;\cssrgb\c80176\c80176\c79976;
+\cssrgb\c90865\c57785\c3831;\cssrgb\c744\c65268\c49801;\cssrgb\c30744\c67324\c99405;}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}}{\leveltext\leveltemplateid1\'01\'00;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid2\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li1440\lin1440 }{\listname ;}\listid1}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs26 \cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Startup checklist (local dev with tunnel) to get the full add + Spotify \uc0\u8594  recs flow working:\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	1	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 SSH tunnel to the DB\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\sa160\partightenfactor0
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Run:\'a0
+\f1 \cf2 \cb3 \strokec4 ssh -i ~/.ssh/id_ed25519 -L 5433:localhost:5432 musicatlas86@34.179.133.224
+\f0 \cf2 \cb3 \strokec4 \
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 (Keep this terminal open.)\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	2	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Backend env in the shell you\'92ll start FastAPI from\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\sa160\partightenfactor0
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Export (no quotes on vars, escape\'a0
+\f1 \cf2 \cb3 \strokec4 !
+\f0 \cf2 \cb3 \strokec4 \'a0or use single quotes):
+\f2\fs24 \cf2 \cb3 \strokec5 export\cf2 \cb3 \strokec4  MB_SOURCE=db\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec5 export\cf2 \cb3 \strokec4  MB_DATABASE_URL=\cf2 \cb3 \strokec6 'postgresql://musicatlas_app:Ob143Zen86!@127.0.0.1:5433/musicbrainz'\cf2 \cb3 \strokec4 \
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec5 export\cf2 \cb3 \strokec4  FRONTEND_URL=http://127.0.0.1:3000\
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec5 export\cf2 \cb3 \strokec4  CORS_ORIGINS=http://127.0.0.1:3000\
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec5 export\cf2 \cb3 \strokec4  SPOTIFY_CLIENT_ID=b70b5e7df2f24fc6a0596d91bfc0d5c4\
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec5 export\cf2 \cb3 \strokec4  SPOTIFY_CLIENT_SECRET=1e24a48c20ee4aee98328464fd804831\
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec5 export\cf2 \cb3 \strokec4  SPOTIFY_REDIRECT_URI=http://127.0.0.1:8000/auth/spotify/callback\
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec5 export\cf2 \cb3 \strokec4  TIDAL_CLIENT_ID=PZakrTt93mRBIotf\
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec5 export\cf2 \cb3 \strokec4  TIDAL_CLIENT_SECRET=e6Gnp947VqM90AxHjCIXnvB2KJZJz6FeE6KdzB7T5oE=\
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec5 export\cf2 \cb3 \strokec4  TIDAL_REDIRECT_URI=http://127.0.0.1:8000/auth/tidal/callback\
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec5 export\cf2 \cb3 \strokec4  APP_ENV=dev\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\partightenfactor0
+\ls1\ilvl1
+\f0 \cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 \uc0\u8232 
+\fs26 \cf2 \cb3 \strokec4 \
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\sa160\partightenfactor0
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Optional sanity:\'a0
+\f1 \cf2 \cb3 \strokec4 echo $MB_SOURCE
+\f0 \cf2 \cb3 \strokec4 \'a0should be\'a0
+\f1 \cf2 \cb3 \strokec4 db
+\f0 \cf2 \cb3 \strokec4 .\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	3	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Start FastAPI\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\sa160\partightenfactor0
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 From the backend root:\'a0
+\f1 \cf2 \cb3 \strokec4 uvicorn app.main:app --reload
+\f0 \cf2 \cb3 \strokec4 \
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Watch logs for:\'a0
+\f1 \cf2 \cb3 \strokec4 MusicBrainz source: db
+\f0 \cf2 \cb3 \strokec4 \'a0(logged once on first MB call).\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	4	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Frontend env\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\sa160\partightenfactor0
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 In\'a0
+\f1 \cf2 \cb3 \strokec7 music-atlas-frontend-v3/.env.local
+\f0 \cf2 \cb3 \strokec4 \'a0(or export):\'a0
+\f1 \cf2 \cb3 \strokec7 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1 (line 8000)
+\f0 \cf2 \cb3 \strokec4 .\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	5	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Start the frontend\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\sa160\partightenfactor0
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 From\'a0
+\f1 \cf2 \cb3 \strokec4 music-atlas-frontend-v3
+\f0 \cf2 \cb3 \strokec4 :\'a0
+\f1 \cf2 \cb3 \strokec4 npm install
+\f0 \cf2 \cb3 \strokec4 \'a0(once), then\'a0
+\f1 \cf2 \cb3 \strokec4 npm run dev
+\f0 \cf2 \cb3 \strokec4 \'a0(or\'a0
+\f1 \cf2 \cb3 \strokec4 npm run build && npm start
+\f0 \cf2 \cb3 \strokec4 ).\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	6	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Verify services\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\sa160\partightenfactor0
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Backend health:\'a0
+\f1 \cf2 \cb3 \strokec4 curl http://127.0.0.1:8000/health
+\f0 \cf2 \cb3 \strokec4 \'a0\uc0\u8594 \'a0
+\f1 \cf2 \cb3 \strokec4 \{"status":"ok"\}
+\f0 \cf2 \cb3 \strokec4 .\
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Frontend: open\'a0
+\f1 \cf2 \cb3 \strokec4 http://127.0.0.1:3000
+\f0 \cf2 \cb3 \strokec4 .\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	7	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Functional checks\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\sa160\partightenfactor0
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Add flow (no login): Enter an artist name in the \'93Add artist\'94 input; watch Network for POST\'a0
+\f1 \cf2 \cb3 \strokec4 /recs/albums/add-artist
+\f0 \cf2 \cb3 \strokec4 ; albums should appear (prepended).\
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Spotify flow (optional): Click \'93Log in with Spotify\'94, complete auth; then artists load, and POST\'a0
+\f1 \cf2 \cb3 \strokec4 /recs/albums/from-spotify
+\f0 \cf2 \cb3 \strokec4 \'a0fires; albums append. Loader shows pulsing dots until recs return.\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
+\ls1\ilvl0\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	8	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 Troubleshooting quick hits\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\sa160\partightenfactor0
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 If DB errors: confirm tunnel running and\'a0
+\f1 \cf2 \cb3 \strokec4 MB_DATABASE_URL
+\f0 \cf2 \cb3 \strokec4 \'a0host/port.\
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 If MB_SOURCE still \'93api\'94: ensure exports are in the same shell that runs uvicorn.\
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 If Spotify redirect issues: confirm\'a0
+\f1 \cf2 \cb3 \strokec4 SPOTIFY_REDIRECT_URI
+\f0 \cf2 \cb3 \strokec4 \'a0matches backend host:port\'a0and Spotify app settings.\
+\ls1\ilvl1\cf2 \cb3 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\cf2 \cb3 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec4 If CORS issues: ensure\'a0
+\f1 \cf2 \cb3 \strokec4 CORS_ORIGINS
+\f0 \cf2 \cb3 \strokec4 \'a0matches frontend origin.\
+}

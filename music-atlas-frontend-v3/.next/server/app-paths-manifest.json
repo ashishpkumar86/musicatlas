@@ -1,6 +1,3 @@
 {
-  "/data-check/page": "app/data-check/page.js",
-  "/page": "app/page.js",
-  "/map/page": "app/map/page.js",
-  "/ingest/page": "app/ingest/page.js"
+  "/page": "app/page.js"
 }

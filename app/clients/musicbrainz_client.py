@@ -279,6 +279,7 @@ def _get_artist_db(
     artist: Dict[str, Any] = {
         "id": base.get("id") or mbid,
         "gid": base.get("gid"),
+        "mb_internal_id": base.get("mb_internal_id"),
         "name": base.get("name"),
         "sort-name": base.get("sort-name") or base.get("sort_name"),
         "type": base.get("type"),
