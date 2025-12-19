@@ -21,7 +21,7 @@ export default function RootLayout({
               <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
                 <div>
                   <p className="text-sm uppercase tracking-[0.25em] text-accent">Music Atlas</p>
-                  <h1 className="text-xl font-semibold text-textPrimary">v3 UI Preview (mock data)</h1>
+                  <h1 className="text-xl font-semibold text-textPrimary">v3 UI Preview</h1>
                 </div>
               </div>
             </header>
