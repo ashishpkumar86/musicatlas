@@ -140,15 +140,28 @@ export function SpotifyRecsPanel() {
     <div className="card-surface rounded-2xl border border-white/5 bg-panel/70 p-6 shadow-xl shadow-black/30">
       <div className="flex flex-col items-center gap-3 text-center">
         <span className="text-xl font-semibold text-textPrimary">Uncle...please sit.</span>
-        <p className="text-sm text-textMuted">Don’t tell me there&apos;s no good new music anymore!</p>
+        <p className="text-sm text-textMuted">No, the world didn’t run out of good new music.</p>
         {!isLoggedIn ? (
           <button
             onClick={handleLogin}
-            className="mt-2 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-canvas transition hover:bg-accentMuted"
+            className="mt-2 inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#1DB954] transition hover:scale-[1.02] hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1DB954]"
           >
-            Log in with Spotify
+            <span className="relative flex items-center gap-2">
+              <span className="block h-6 w-24">
+                {/* Use Next.js Image for optimization if desired; simple img keeps it inline and flexible */}
+                <img
+                  src="/Spotify_Full_Logo_RGB_Green.png"
+                  alt="Log in with Spotify"
+                  className="h-6 w-auto"
+                />
+              </span>
+            </span>
           </button>
         ) : null}
+        <p className="max-w-2xl text-sm text-textMuted">
+          Log in with Spotify and we’ll analyze your favorite artists to surface recent albums worth your time. Or enter any
+          artist you like — we’ll build the trail from there.
+        </p>
         {isLoggedIn ? (
           <div className="w-full rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-textPrimary">
             <div className="mb-1 text-xs uppercase tracking-[0.15em] text-textMuted">Your artists</div>

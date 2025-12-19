@@ -67,6 +67,7 @@ def tidal_login():
 
 
 @router.get("/spotify/login")
+@router.head("/spotify/login")
 def spotify_login():
     """
     Start the Spotify OAuth flow (Authorization Code + PKCE).

@@ -25,3 +25,12 @@ __pycache__/
 # Local data + installs (do not commit)
 music-atlas-data/
 music-atlas-frontend-v3/node_modules/
+]633;E;{   echo ""\x3b   echo "# --- Local build/cache (do not commit) ---"\x3b   echo "__pycache__/"\x3b   echo "*.pyc"\x3b   echo ".venv/"\x3b   echo "node_modules/"\x3b   echo ".next/"\x3b   echo "music-atlas-frontend-v3/.next/"\x3b   echo "music-atlas-frontend-v3/node_modules/"\x3b } >> .gitignore;4b0eeda9-319c-46eb-a626-bef0c866f06b]633;C
+# --- Local build/cache (do not commit) ---
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.next/
+music-atlas-frontend-v3/.next/
+music-atlas-frontend-v3/node_modules/

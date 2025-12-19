@@ -12,12 +12,6 @@ type SpotifyArtist = {
   genres?: string[];
 };
 
-type TidalArtist = {
-  id: string;
-  name: string;
-  popularity?: number | null;
-};
-
 type SonicTag = {
   name: string;
   score?: number | null;
@@ -31,12 +25,6 @@ type SessionBase = {
 type SpotifySession = SessionBase & {
   user_id?: string;
   display_name?: string;
-  scope?: string;
-  expires_at?: number | null;
-};
-
-type TidalSession = SessionBase & {
-  user_id?: string;
   scope?: string;
   expires_at?: number | null;
 };
@@ -217,20 +205,15 @@ const TableCard = ({
 
 export default function DataCheckPage() {
   const [spotifySession, setSpotifySession] = useState<SpotifySession | null>(null);
-  const [tidalSession, setTidalSession] = useState<TidalSession | null>(null);
   const [spotifyArtists, setSpotifyArtists] = useState<SpotifyArtist[]>([]);
-  const [tidalArtists, setTidalArtists] = useState<TidalArtist[]>([]);
   const [tagCloud, setTagCloud] = useState<SonicTag[]>([]);
-  const [status, setStatus] = useState<{ spotify: 'idle' | 'loading' | 'ready' | 'error'; tidal: 'idle' | 'loading' | 'ready' | 'error' }>({
-    spotify: 'idle',
-    tidal: 'idle'
-  });
+  const [spotifyStatus, setSpotifyStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [tagStatus, setTagStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [tagError, setTagError] = useState<string | null>(null);
 
   const loadSpotify = async () => {
-    setStatus((s) => ({ ...s, spotify: 'loading' }));
+    setSpotifyStatus('loading');
     try {
       const data = await apiFetch<SpotifySession>('/auth/spotify/session');
       setSpotifySession(data);
@@ -240,54 +223,16 @@ export default function DataCheckPage() {
       } else {
         setSpotifyArtists([]);
       }
-      setStatus((s) => ({ ...s, spotify: 'ready' }));
+      setSpotifyStatus('ready');
       setError(null);
     } catch (err) {
-      setStatus((s) => ({ ...s, spotify: 'error' }));
-      setError((err as Error).message);
-    }
-  };
-
-  const loadTidal = async () => {
-    setStatus((s) => ({ ...s, tidal: 'loading' }));
-    try {
-      const session = await apiFetch<TidalSession>('/auth/tidal/session');
-      setTidalSession(session);
-      if (session.logged_in) {
-        const data = await apiFetch<{
-          data: { id: string }[];
-          included?: { id: string | number; type: string; attributes?: { name?: string; imageUrl?: string | null } }[];
-        }>('/tidal/favorites/artists?limit=50');
-
-        const rawItems = data.data || [];
-        const artistResources = (data.included || []).filter((res) => res.type === 'artists');
-        const resourceMap = new Map(artistResources.map((res) => [String(res.id), res]));
-
-        const fullArtistList = rawItems.map((entry) => {
-          const full = resourceMap.get(String(entry.id));
-          const attrs = full?.attributes || {};
-          return {
-            id: String(entry.id),
-            name: attrs.name || 'Unknown',
-            popularity: typeof attrs.popularity === 'number' ? attrs.popularity : null
-          };
-        });
-
-        setTidalArtists(fullArtistList);
-      } else {
-        setTidalArtists([]);
-      }
-      setStatus((s) => ({ ...s, tidal: 'ready' }));
-      setError(null);
-    } catch (err) {
-      setStatus((s) => ({ ...s, tidal: 'error' }));
+      setSpotifyStatus('error');
       setError((err as Error).message);
     }
   };
 
   useEffect(() => {
     loadSpotify();
-    loadTidal();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -295,24 +240,14 @@ export default function DataCheckPage() {
     setTagStatus('loading');
     setTagError(null);
 
-    const payload = [
-      ...spotifyArtists.map((artist) => ({
-        name: artist.name,
-        source: 'spotify',
-        source_id: artist.id,
-        country_code: null,
-        popularity: normalizePopularity(artist.popularity),
-        genres: Array.isArray(artist.genres) ? artist.genres : []
-      })),
-      ...tidalArtists.map((artist) => ({
-        name: artist.name,
-        source: 'tidal',
-        source_id: artist.id,
-        country_code: null,
-        popularity: normalizePopularity(artist.popularity),
-        genres: []
-      }))
-    ];
+    const payload = spotifyArtists.map((artist) => ({
+      name: artist.name,
+      source: 'spotify',
+      source_id: artist.id,
+      country_code: null,
+      popularity: normalizePopularity(artist.popularity),
+      genres: Array.isArray(artist.genres) ? artist.genres : []
+    }));
 
     if (payload.length === 0) {
       setTagError('No artists loaded yet. Log in and refresh first.');
@@ -340,7 +275,7 @@ export default function DataCheckPage() {
         <div className="flex flex-col gap-2">
           <p className="text-sm uppercase tracking-[0.25em] text-accent">Data check</p>
           <h1 className="text-3xl font-semibold text-textPrimary">Captured profile fields</h1>
-          <p className="text-base text-textMuted">Inspect the fields we store after you log in with Spotify or TIDAL.</p>
+          <p className="text-base text-textMuted">Inspect the fields we store after you log in with Spotify.</p>
         </div>
         <Link
           href="/"
@@ -358,21 +293,12 @@ export default function DataCheckPage() {
         <TableCard
           title="Spotify"
           rows={rowsFromSession(spotifySession, ['user_id', 'display_name', 'scope', 'expires_at'])}
-          status={status.spotify}
+          status={spotifyStatus}
           connected={!!spotifySession?.logged_in}
           artists={spotifyArtists}
           showPopularity
           showGenres
           onRefresh={loadSpotify}
-        />
-        <TableCard
-          title="TIDAL"
-          rows={rowsFromSession(tidalSession, ['user_id', 'scope', 'expires_at'])}
-          status={status.tidal}
-          connected={!!tidalSession?.logged_in}
-          artists={tidalArtists}
-          showPopularity
-          onRefresh={loadTidal}
         />
       </div>
 
@@ -381,7 +307,7 @@ export default function DataCheckPage() {
           <div className="flex flex-col gap-1">
             <p className="text-xs uppercase tracking-[0.2em] text-textMuted">Sonic tag cloud</p>
             <span className="text-lg font-semibold text-textPrimary">Blend your artists into tags</span>
-            <p className="text-sm text-textMuted">Uses all loaded Spotify + TIDAL artists to build a tag cloud.</p>
+            <p className="text-sm text-textMuted">Uses all loaded Spotify artists to build a tag cloud.</p>
           </div>
           <button
             onClick={buildSonicTags}

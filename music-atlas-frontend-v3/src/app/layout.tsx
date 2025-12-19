@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { VariantProvider } from '@/components/variant-provider';
-import { VariantToggle } from '@/components/variant-toggle';
 
 export const metadata: Metadata = {
   title: 'Music Atlas v3 Preview',
@@ -24,7 +23,6 @@ export default function RootLayout({
                   <p className="text-sm uppercase tracking-[0.25em] text-accent">Music Atlas</p>
                   <h1 className="text-xl font-semibold text-textPrimary">v3 UI Preview (mock data)</h1>
                 </div>
-                <VariantToggle />
               </div>
             </header>
             <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
