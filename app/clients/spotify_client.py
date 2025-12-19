@@ -6,7 +6,7 @@ import os
 import secrets
 import time
 import urllib.parse
-from typing import Dict, Any, Tuple, List
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 
@@ -42,6 +42,7 @@ class SpotifyAPIError(Exception):
 
 
 logger = get_logger(__name__)
+_app_token_cache: Dict[str, Any] = {}
 
 
 # ---------------------------------------------------------------------------
@@ -228,3 +229,126 @@ def simplify_spotify_artist(artist: Dict[str, Any]) -> Dict[str, Any]:
         "spotifyUrl": spotify_url,
         "followers_total": followers_block.get("total"),
     }
+
+
+# ---------------------------------------------------------------------------
+# Client Credentials + catalog search (app-only)
+# ---------------------------------------------------------------------------
+
+
+def _get_cached_app_token() -> Optional[str]:
+    """
+    Return a cached app token if it hasn't expired yet.
+    """
+    token = _app_token_cache.get("access_token")
+    expires_at = _app_token_cache.get("expires_at") or 0
+    if token and expires_at > time.time():
+        return token
+    return None
+
+
+def get_spotify_app_access_token() -> Optional[str]:
+    """
+    Fetch (and cache) an app-only access token using the Client Credentials Flow.
+    """
+    cached = _get_cached_app_token()
+    if cached:
+        return cached
+
+    if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET:
+        logger.warning("Spotify client credentials missing; skipping catalog enrichment")
+        return None
+
+    data = {
+        "grant_type": "client_credentials",
+    }
+    try:
+        resp = requests.post(
+            SPOTIFY_TOKEN_URL,
+            data=data,
+            auth=(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET),
+            timeout=10,
+        )
+    except Exception as exc:  # noqa: BLE001 - log and continue
+        logger.warning("Spotify app token request failed: %s", exc)
+        return None
+
+    if resp.status_code >= 400:
+        logger.warning(
+            "Spotify app token error status=%s body=%s",
+            resp.status_code,
+            resp.text,
+        )
+        return None
+
+    payload = resp.json() or {}
+    access_token = payload.get("access_token")
+    expires_in = payload.get("expires_in", 3600)
+
+    if not access_token:
+        logger.warning("Spotify app token missing in response")
+        return None
+
+    # Add a small buffer to avoid using an expired token.
+    expires_at = time.time() + max(int(expires_in) - 60, 0)
+    _app_token_cache["access_token"] = access_token
+    _app_token_cache["expires_at"] = expires_at
+
+    return access_token
+
+
+def search_spotify_albums_catalog(
+    album_name: str,
+    artist_name: str,
+    limit: int = 10,
+    market: str = "DE",
+) -> List[Dict[str, Any]]:
+    """
+    Search Spotify albums with an app token.
+    Returns a list of raw album items (or empty list on failure).
+    """
+    token = get_spotify_app_access_token()
+    if not token:
+        return []
+
+    q_album = (album_name or "").replace('"', "")
+    q_artist = (artist_name or "").replace('"', "")
+    params = {
+        "type": "album",
+        "limit": limit,
+        "market": market,
+        "q": f'album:"{q_album}" artist:"{q_artist}"',
+    }
+    headers = {
+        "Authorization": f"Bearer {token}",
+    }
+
+    try:
+        resp = requests.get(
+            f"{SPOTIFY_API_BASE}/search",
+            headers=headers,
+            params=params,
+            timeout=10,
+        )
+    except Exception as exc:  # noqa: BLE001 - log and skip
+        logger.info("[spotify] catalog search failed for %r / %r: %s", album_name, artist_name, exc)
+        return []
+
+    if resp.status_code == 401:
+        # Token expired or invalid; clear cache and let caller retry if desired.
+        _app_token_cache.clear()
+        logger.info("[spotify] catalog search unauthorized; cleared token cache")
+        return []
+
+    if resp.status_code >= 400:
+        logger.info(
+            "[spotify] catalog search error status=%s body=%s",
+            resp.status_code,
+            resp.text,
+        )
+        return []
+
+    payload = resp.json() or {}
+    albums_block = payload.get("albums") or {}
+    items = albums_block.get("items") or []
+    return items

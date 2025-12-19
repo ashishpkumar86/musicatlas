@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from app.data.musicbrainz_db import get_mb_connection
 from app.services.sonic_tags import fetch_musicbrainz_artist_full
+from app.services.spotify_enrichment import enrich_albums_with_spotify
 from app.utils.config import SESSION_COOKIE_NAME, SESSIONS
 from app.utils.session import ensure_session_defaults
 from app.utils.logging import get_logger
@@ -52,6 +53,7 @@ def get_album_recommendations(
     window_years: int = 1,
     min_tracks: int = 3,
     max_per_tag: int = 2,
+    enrich_spotify: bool = True,
 ):
     """
     Proxy to the DB function public.get_album_recs_v1.
@@ -91,6 +93,7 @@ def get_album_recommendations(
     finally:
         conn.close()
 
+    rows = enrich_albums_with_spotify(rows, enrich_spotify=enrich_spotify, max_items=50)
     return rows
 
 
@@ -102,6 +105,7 @@ def get_album_recommendations_from_spotify(
     window_years: int = 1,
     min_tracks: int = 3,
     max_per_tag: int = 2,
+    enrich_spotify: bool = True,
 ):
     """
     Map Spotify artists to MusicBrainz numeric IDs, then call get_album_recs_v1.
@@ -173,6 +177,8 @@ def get_album_recommendations_from_spotify(
     finally:
         conn.close()
 
+    rows = enrich_albums_with_spotify(rows, enrich_spotify=enrich_spotify, max_items=50)
+
     session_id = request.cookies.get(SESSION_COOKIE_NAME)
     if session_id:
         session = ensure_session_defaults(session_id)
@@ -190,6 +196,7 @@ def get_album_recommendations_for_added_artist(
     window_years: int = 1,
     min_tracks: int = 3,
     max_per_tag: int = 2,
+    enrich_spotify: bool = True,
 ):
     """
     Resolve a single artist name to a MusicBrainz numeric ID and fetch album recs.
@@ -236,6 +243,8 @@ def get_album_recommendations_for_added_artist(
         raise HTTPException(status_code=500, detail="Database error during album recommendation")
     finally:
         conn.close()
+
+    rows = enrich_albums_with_spotify(rows, enrich_spotify=enrich_spotify, max_items=50)
 
     session_id = request.cookies.get(SESSION_COOKIE_NAME)
     if session_id:

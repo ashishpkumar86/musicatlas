@@ -23,6 +23,12 @@ type AlbumRec = {
   supporting_seed_ids: number[];
   dominant_tag?: string | null;
   top_tags?: string[] | null;
+  spotify_album_id?: string | null;
+  spotify_url?: string | null;
+  spotify_image_url?: string | null;
+  spotify_album_name?: string | null;
+  spotify_release_date?: string | null;
+  spotify_release_date_precision?: string | null;
 };
 
 type SessionResponse = { logged_in: boolean };
@@ -216,10 +222,14 @@ export function SpotifyRecsPanel() {
           <p className="text-sm text-textMuted">No albums returned for your seeds.</p>
         ) : recsStatus === 'error' ? (
           <p className="text-sm text-textMuted">Failed to build album recommendations.</p>
-          ) : albums.length > 0 ? (
+        ) : albums.length > 0 ? (
           <div className="grid gap-3">
             {albums.map((album) => {
-              const year = album.first_release_date ? album.first_release_date.split('-')[0] : '';
+              const coverUrl = album.spotify_image_url || null;
+              const spotifyUrl = album.spotify_url || null;
+              const albumName = album.spotify_album_name || album.release_group_name;
+              const releaseDate = album.spotify_release_date || album.first_release_date;
+              const year = releaseDate ? releaseDate.split('-')[0] : '';
               const dominant = album.dominant_tag || null;
               const secondary =
                 Array.isArray(album.top_tags) && album.top_tags.length
@@ -227,16 +237,42 @@ export function SpotifyRecsPanel() {
                   : '';
               return (
                 <div key={`${album.release_group_id}-${album.artist_id}`} className="rounded-lg bg-white/5 p-3">
-                  <div className="text-sm font-semibold text-textPrimary">{album.release_group_name}</div>
-                  <div className="text-xs text-textMuted">{album.artist_name}</div>
-                  <div className="text-xs italic text-textMuted">{year}</div>
-                  {(dominant || secondary) ? (
-                    <div className="text-xs text-textMuted">
-                      {dominant ? <span className="font-semibold text-textPrimary">{dominant}</span> : null}
-                      {dominant && secondary ? <span className="text-textMuted">, </span> : null}
-                      {secondary ? <span>{secondary}</span> : null}
+                  <div className="flex gap-3">
+                    {coverUrl ? (
+                      <a
+                        href={spotifyUrl || '#'}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block h-20 w-20 overflow-hidden rounded-md border border-white/10 bg-black/30"
+                      >
+                        <img src={coverUrl} alt={albumName} className="h-full w-full object-cover" />
+                      </a>
+                    ) : null}
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm font-semibold text-textPrimary">{albumName}</div>
+                        {spotifyUrl ? (
+                          <a
+                            href={spotifyUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs font-semibold text-[#1DB954] hover:underline"
+                          >
+                            Open in Spotify
+                          </a>
+                        ) : null}
+                      </div>
+                      <div className="text-xs text-textMuted">{album.artist_name}</div>
+                      <div className="text-xs italic text-textMuted">{year}</div>
+                      {(dominant || secondary) ? (
+                        <div className="text-xs text-textMuted">
+                          {dominant ? <span className="font-semibold text-textPrimary">{dominant}</span> : null}
+                          {dominant && secondary ? <span className="text-textMuted">, </span> : null}
+                          {secondary ? <span>{secondary}</span> : null}
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
+                  </div>
                 </div>
               );
             })}

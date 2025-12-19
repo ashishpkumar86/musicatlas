@@ -34,3 +34,4 @@ node_modules/
 .next/
 music-atlas-frontend-v3/.next/
 music-atlas-frontend-v3/node_modules/
+.env.example
