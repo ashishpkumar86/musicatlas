@@ -340,10 +340,11 @@ def get_artist(
 
 
 def search_artist_summary(
-    query: str,
+    query: Optional[str] = None,
     country_code: str = "DE",
     limit: int = 5,
     offset: int = 0,
+    name: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Backwards-compatible helper.
@@ -363,7 +364,13 @@ def search_artist_summary(
     Returns:
         Raw JSON dict from MusicBrainz (same as search_artists()).
     """
+    # Accept legacy callers passing `name=...` (e.g., /health/musicbrainz).
+    # If both are provided, prefer the canonical `query`.
+    final_query = query or name
+    if not final_query:
+        raise ValueError("search_artist_summary requires a query or name")
+
     # We ignore country_code here because MusicBrainz doesn't have a
     # direct country filter on this endpoint. Country-based filtering
     # is done higher up (e.g., in enrichment) if needed.
-    return search_artists(query, limit=limit, offset=offset)
+    return search_artists(final_query, limit=limit, offset=offset)
