@@ -1,0 +1,114 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2865
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 flowchart TB\
+  %% =========================\
+  %% MASTER DIAGRAM: Music Atlas v2 (themusicatlas.com)\
+  %% =========================\
+\
+  %% ---------- USERS ----------\
+  U[User Browser] -->|HTTPS :443| DNS[themusicatlas.com / www.themusicatlas.com]\
+\
+  %% ---------- GCP / VM RUNTIME ----------\
+  subgraph GCP[GCP: Compute Engine VM (musicatlas-1986)]\
+    subgraph VM[musicatlas-vm]\
+      C[Caddy (systemd)\\nTLS (Let's Encrypt)]:::svc\
+      N[Next.js Frontend\\nbind: 127.0.0.1:3000]:::svc\
+      F[FastAPI Backend\\nbind: 127.0.0.1:8000]:::svc\
+      PG[(PostgreSQL\\nMusicBrainz DB\\nbind: localhost:5432)]:::db\
+      SES[(In-memory Sessions\\ncookie-keyed SESSIONS)]:::db\
+\
+      C -->|reverse_proxy /| N\
+      C -->|handle_path /api/*| F\
+      F --> SES\
+      F -->|MB_SOURCE=db\\nMB_DATABASE_URL=localhost:5432| PG\
+    end\
+\
+    FW80[Firewall: 80/443 ENABLED]:::sec\
+    FWAPP[Firewall: 3000/8000 DISABLED]:::sec\
+    FW80 -.-> VM\
+    FWAPP -.-> VM\
+  end\
+\
+  DNS --> C\
+\
+  %% ---------- SPOTIFY OAUTH ----------\
+  F -->|/api/auth/spotify/login| SP[Spotify Accounts]:::ext\
+  SP -->|redirect to\\n/api/auth/spotify/callback| F\
+\
+  %% ---------- FRONTEND PRODUCT FLOWS ----------\
+  subgraph FE_FLOW[Frontend UX (Next.js)]\
+    H[Home\\nSpotifyRecsPanel\\n+ Add Artist input]:::ui\
+    DC[/data-check\\n(Spotify-only)]:::ui\
+  end\
+\
+  N --> H\
+  H -->|calls /api/*| C\
+  H -->|GET /api/spotify/top-artists| F\
+  H -->|POST /api/recs/albums/from-spotify| F\
+  H -->|POST /api/recs/albums/add-artist| F\
+  H -->|Optional route| DC\
+\
+  %% ---------- POSTGRES: MB + DERIVED GRAPH TABLES ----------\
+  subgraph DBLAYER[Postgres Data Layer]\
+    %% Core MB-ish entities (as used/queried)\
+    ART[artist]:::tbl\
+    AT[artist_tag + tag]:::tbl\
+    RG0[release_group + rels]:::tbl\
+\
+    %% Derived / locked tables\
+    NODES[(public.artist_node_v1\\nCanonical artist universe)]:::tbl\
+    RAW[(public.artist_tag_profile_raw_v1)]:::tbl\
+    UNI[(public.artist_universe_v2\\n>=3 positive tags)]:::tbl\
+    CORE2[(public.artist_tag_profile_core_v2\\npositive-only)]:::tbl\
+    CORE3[(public.artist_tag_profile_core_v3\\nTop 15 tags/artist\\nFanout<=800/tag)]:::tbl\
+    IDF[(public.tag_idf_v3)]:::tbl\
+    EDGES[(public.artist_edges_taste_v3\\nIDF-weighted Jaccard)]:::tbl\
+    TOPK[(public.artist_edges_taste_v3_topk\\nTop 50 neighbors/artist)]:::tbl\
+    MACRO[(public.artist_tag_macro_v1\\nfanout>800\\nbipartite only)]:::tbl\
+    FACTS[(public.release_group_facts_v1\\nhas_secondary_types filter)]:::tbl\
+\
+    %% Serving function\
+    RECS[[public.get_album_recs_v1(seeds[], final_k, window_years, ...)\\nreturns albums + tags + support]]:::fn\
+  end\
+\
+  %% Core -> Derived graph pipeline\
+  ART --> NODES\
+  AT --> RAW --> UNI --> CORE2 --> CORE3\
+  CORE3 --> IDF --> EDGES --> TOPK\
+  CORE3 --> MACRO\
+  RG0 --> FACTS\
+\
+  %% Backend uses function/tables for recommendations\
+  F -->|SQL call| RECS\
+  RECS --> TOPK\
+  RECS --> CORE3\
+  RECS --> FACTS\
+  RECS --> ART\
+\
+  %% ---------- LOCAL DEV / TUNNEL MODE ----------\
+  subgraph LOCAL[Local Dev (Mac) + SSH Tunnel]\
+    MAC[Mac Terminal]:::dev\
+    TUN[SSH tunnel\\n-L 5433:localhost:5432]:::dev\
+    LBE[Local FastAPI (optional)\\nMB_DATABASE_URL=localhost:5433]:::dev\
+    LFE[Local Next.js (optional)\\n:3000]:::dev\
+\
+    MAC --> TUN --> PG\
+    LBE -->|queries| MAC\
+    LFE -->|calls| LBE\
+  end\
+\
+  %% Styling\
+  classDef svc fill:#eef,stroke:#334,stroke-width:1px;\
+  classDef db fill:#efe,stroke:#343,stroke-width:1px;\
+  classDef tbl fill:#fff,stroke:#666,stroke-width:1px;\
+  classDef fn fill:#fff7e6,stroke:#a60,stroke-width:1px;\
+  classDef ui fill:#f7f7ff,stroke:#446,stroke-width:1px;\
+  classDef sec fill:#fff,stroke:#333,stroke-dasharray: 4 3;\
+  classDef ext fill:#fff,stroke:#333,stroke-width:1px;\
+  classDef dev fill:#f5fffa,stroke:#2a6,stroke-width:1px;\
+}
