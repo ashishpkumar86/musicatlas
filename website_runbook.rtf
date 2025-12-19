@@ -1,0 +1,567 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2865
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\froman\fcharset0 Times-Bold;\f1\froman\fcharset0 Times-Roman;\f2\fmodern\fcharset0 Courier;
+}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;\red0\green0\blue233;\red109\green109\blue109;
+}
+{\*\expandedcolortbl;;\cssrgb\c0\c0\c0;\cssrgb\c0\c0\c93333;\cssrgb\c50196\c50196\c50196;
+}
+{\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid1\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid1}
+{\list\listtemplateid2\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid101\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid2}
+{\list\listtemplateid3\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid201\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid3}
+{\list\listtemplateid4\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid301\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid4}
+{\list\listtemplateid5\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid401\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid5}
+{\list\listtemplateid6\listhybrid{\listlevel\levelnfc0\levelnfcn0\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{decimal\}}{\leveltext\leveltemplateid501\'01\'00;}{\levelnumbers\'01;}\fi-360\li720\lin720 }{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{circle\}}{\leveltext\leveltemplateid502\'01\uc0\u9702 ;}{\levelnumbers;}\fi-360\li1440\lin1440 }{\listname ;}\listid6}
+{\list\listtemplateid7\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid601\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid7}
+{\list\listtemplateid8\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid701\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid8}
+{\list\listtemplateid9\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{disc\}}{\leveltext\leveltemplateid801\'01\uc0\u8226 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid9}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}{\listoverride\listid3\listoverridecount0\ls3}{\listoverride\listid4\listoverridecount0\ls4}{\listoverride\listid5\listoverridecount0\ls5}{\listoverride\listid6\listoverridecount0\ls6}{\listoverride\listid7\listoverridecount0\ls7}{\listoverride\listid8\listoverridecount0\ls8}{\listoverride\listid9\listoverridecount0\ls9}}
+\paperw11900\paperh16840\margl1440\margr1440\vieww17460\viewh17380\viewkind0
+\deftab720
+\pard\pardeftab720\sa321\partightenfactor0
+
+\f0\b\fs58 \cf0 \expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Music Atlas \'97 VM Cold-Start Runbook\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Goal:
+\f1\b0 \uc0\u8232 Bring {\field{\*\fldinst{HYPERLINK "https://www.themusicatlas.com/"}}{\fldrslt 
+\f0\b \cf3 \ul \ulc3 \strokec3 https://www.themusicatlas.com}} fully online after a VM restart.\
+
+\f0\b Architecture recap (mental model):
+\f1\b0 \
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+Internet (HTTPS 443)\
+        \uc0\u8595 \
+     Caddy\
+        \uc0\u8595 \
+ \uc0\u9484 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9488 \
+ \uc0\u9474                \u9474 \
+ \uc0\u9474   Next.js :3000\u9474   \u8592  Frontend\
+ \uc0\u9474   FastAPI :8000\u9474   \u8592  Backend\
+ \uc0\u9474                \u9474 \
+ \uc0\u9492 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9516 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9496 \
+         \uc0\u8595 \
+  PostgreSQL (MusicBrainz)\
+\pard\pardeftab720\partightenfactor0
+
+\f1\fs34 \cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 0. Preconditions (Before You Start)\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\b0\fs34 \cf0 Make sure you have:\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls1\ilvl0\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 GCP project: 
+\f2\fs36 musicatlas-1986
+\f1\fs34 \
+\ls1\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 VM: 
+\f2\fs36 musicatlas-vm
+\f1\fs34 \
+\ls1\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 User: 
+\f2\fs36 musicatlas86
+\f1\fs34 \
+\ls1\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Repo: 
+\f2\fs36 https://github.com/ashishpkumar86/musicatlas
+\f1\fs34 \
+\ls1\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Domain DNS already pointing to VM external IP\
+\ls1\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Firewall rule 
+\f0\b allow-http-https
+\f1\b0  enabled\
+\ls1\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Firewall rules for 
+\f2\fs36 3000
+\f1\fs34  and 
+\f2\fs36 8000
+\f1\fs34  
+\f0\b disabled
+\f1\b0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 1. Restart VM & Get IP\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  GCP Console\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls2\ilvl0\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Restart VM\
+\ls2\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Confirm it is 
+\f0\b RUNNING
+\f1\b0 \
+\ls2\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Note the 
+\f0\b External IP
+\f1\b0 \
+\pard\pardeftab720\sa240\partightenfactor0
+\cf0 (If DNS is already set, this is just a sanity check.)\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 2. SSH Into the VM\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  Your Mac terminal\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+ssh musicatlas86@<VM_EXTERNAL_IP>\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 Expected prompt:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+musicatlas86@musicatlas-vm:~$\
+\pard\pardeftab720\partightenfactor0
+
+\f1\fs34 \cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 3. Verify Caddy Is Running (Critical)\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  VM\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+sudo systemctl status caddy\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 You want:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+Active: active (running)\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 If not running:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+sudo systemctl start caddy\
+sudo systemctl enable caddy\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 Optional sanity check:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+sudo journalctl -u caddy -n 20 --no-pager\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 No TLS errors should appear.\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 4. Verify Caddy Configuration\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  VM\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+sudo cat /etc/caddy/Caddyfile\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 Expected contents:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+www.themusicatlas.com \{\
+\
+  # Frontend (Next.js)\
+  reverse_proxy 127.0.0.1:3000\
+\
+  # Backend (FastAPI) under /api/*\
+  handle_path /api/* \{\
+    reverse_proxy 127.0.0.1:8000\
+  \}\
+\}\
+\
+themusicatlas.com \{\
+  redir https://www.themusicatlas.com\{uri\} permanent\
+\}\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 If this file is wrong \uc0\u8594  
+\f0\b stop here and fix it
+\f1\b0 .\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 5. Go to App Directory\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  VM\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+cd ~/staging/musicatlas-app\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 Confirm:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+ls\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 You should see:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+app/\
+music-atlas-frontend-v3/\
+.venv/\
+\pard\pardeftab720\partightenfactor0
+
+\f1\fs34 \cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 6. Pull Latest Code\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  VM\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+git pull origin main\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 Expected:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+Already up to date.\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 If not:\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls3\ilvl0\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Let it fast-forward\
+\ls3\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 No conflicts should exist\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 7. Backend: Activate Virtualenv\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  VM\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+source .venv/bin/activate\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 Prompt becomes:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+(.venv) musicatlas86@musicatlas-vm:~/staging/musicatlas-app$\
+\pard\pardeftab720\partightenfactor0
+
+\f1\fs34 \cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 8. Backend: Verify Environment Variables\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  VM\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+env | egrep 'MB_|SPOTIFY_|TIDAL_'\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 You should see (example):\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+MB_SOURCE=db\
+MB_DATABASE_URL=postgresql://musicatlas_app:***@127.0.0.1:5432/musicbrainz\
+SPOTIFY_CLIENT_ID=...\
+SPOTIFY_CLIENT_SECRET=...\
+SPOTIFY_REDIRECT_URI=https://www.themusicatlas.com/api/auth/spotify/callback\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 \uc0\u10071  If these are missing:\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls4\ilvl0\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Check your 
+\f2\fs36 .env
+\f1\fs34 \
+\ls4\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Check your shell profile / service launcher\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 9. Start Backend (FastAPI)\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  VM\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+uvicorn app.main:app --host 127.0.0.1 --port 8000\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 Expected output:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+Uvicorn running on http://127.0.0.1:8000\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 Leave this 
+\f0\b running
+\f1\b0  (or run it via 
+\f2\fs36 tmux
+\f1\fs34  / 
+\f2\fs36 screen
+\f1\fs34 ).\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 10. Backend Health Check\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  VM (new terminal if needed)\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+curl -s http://127.0.0.1:8000/health\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 Expected:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+\{"status":"ok"\}\
+\pard\pardeftab720\partightenfactor0
+
+\f1\fs34 \cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 11. Start Frontend (Next.js)\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  VM\uc0\u8232 (open another terminal or tmux pane)\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+cd ~/staging/musicatlas-app/music-atlas-frontend-v3\
+npm run dev\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 Expected:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+ready - started server on 0.0.0.0:3000\
+\pard\pardeftab720\partightenfactor0
+
+\f1\fs34 \cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 12. Verify Internal Ports (No Public Exposure)\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  VM\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+sudo ss -ltnp | egrep ':3000|:8000'\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 Expected:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+LISTEN 127.0.0.1:8000 uvicorn\
+LISTEN 127.0.0.1:3000 next-server\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 \uc0\u10071  If you see 
+\f2\fs36 0.0.0.0
+\f1\fs34  \uc0\u8594  
+\f0\b fix immediately
+\f1\b0 \
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 13. External HTTPS Checks\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  VM or your Mac\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f0\b\fs38 \cf0 Homepage\
+\pard\pardeftab720\partightenfactor0
+
+\f2\b0\fs36 \cf0 \
+curl -I https://www.themusicatlas.com/\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 Expected:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+HTTP/2 200\
+x-powered-by: Next.js\
+\pard\pardeftab720\sa280\partightenfactor0
+
+\f0\b\fs38 \cf0 Backend via proxy\
+\pard\pardeftab720\partightenfactor0
+
+\f2\b0\fs36 \cf0 \
+curl -s https://www.themusicatlas.com/api/health\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 Expected:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+\{"status":"ok"\}\
+\pard\pardeftab720\partightenfactor0
+
+\f1\fs34 \cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 14. Spotify OAuth Sanity Check\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  VM or Mac\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+curl -I https://www.themusicatlas.com/api/auth/spotify/login\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 Expected:\
+\pard\pardeftab720\partightenfactor0
+
+\f2\fs36 \cf0 \
+HTTP/2 302\
+location: https://accounts.spotify.com/authorize?...\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\fs34 \cf0 This confirms:\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls5\ilvl0\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 HTTPS\
+\ls5\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Redirect\
+\ls5\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 OAuth config correct\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 15. Browser Verification\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  Your browser\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls6\ilvl0\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	1	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Open:\uc0\u8232 \u55357 \u56393  {\field{\*\fldinst{HYPERLINK "https://www.themusicatlas.com/"}}{\fldrslt \cf3 \ul \ulc3 \strokec3 https://www.themusicatlas.com}}\
+\ls6\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	2	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Click 
+\f0\b Log in with Spotify
+\f1\b0 \
+\ls6\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	3	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Confirm:\
+\pard\tx940\tx1440\pardeftab720\li1440\fi-1440\sa240\partightenfactor0
+\ls6\ilvl1\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Redirect to Spotify\
+\ls6\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Redirect back to Music Atlas\
+\ls6\ilvl1\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u9702 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Album recommendations load\
+\pard\pardeftab720\sa240\partightenfactor0
+\cf0 \uc0\u9888 \u65039  Chrome may show a red Safe Browsing page:\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls7\ilvl0\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Known false positive\
+\ls7\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Submitted for review\
+\ls7\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 OAuth still works\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 16. Final Firewall Check (Security)\
+\pard\pardeftab720\sa240\partightenfactor0
+
+\fs34 \cf0 Where:
+\f1\b0  GCP Console or Cloud Shell\
+Ensure:\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls8\ilvl0\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 \uc0\u9989  
+\f2\fs36 allow-http-https
+\f1\fs34  \uc0\u8594  ENABLED\
+\ls8\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 \uc0\u10060  
+\f2\fs36 allow-nextjs-3000
+\f1\fs34  \uc0\u8594  DISABLED\
+\ls8\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 \uc0\u10060  
+\f2\fs36 allow-musicatlas-8000
+\f1\fs34  \uc0\u8594  DISABLED\
+\pard\pardeftab720\sa240\partightenfactor0
+\cf0 Your app must 
+\f0\b only
+\f1\b0  be reachable via Caddy.\
+\pard\pardeftab720\partightenfactor0
+\cf4 \strokec4 \
+\pard\pardeftab720\sa298\partightenfactor0
+
+\f0\b\fs46 \cf0 \strokec2 17. You Are Live \uc0\u55356 \u57225 \
+\pard\pardeftab720\sa240\partightenfactor0
+
+\f1\b0\fs34 \cf0 At this point:\
+\pard\tx220\tx720\pardeftab720\li720\fi-720\sa240\partightenfactor0
+\ls9\ilvl0\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 VM can reboot\
+\ls9\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 Services can restart\
+\ls9\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 App can be restored deterministically\
+\ls9\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+\outl0\strokewidth0 \strokec2 No tribal knowledge required\
+}
