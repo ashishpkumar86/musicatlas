@@ -43,6 +43,9 @@ class SpotifyAPIError(Exception):
 
 logger = get_logger(__name__)
 _app_token_cache: Dict[str, Any] = {}
+_catalog_backoff_until = 0.0
+_catalog_min_interval = 0.25  # quarter-second spacing to stay under burst limits
+_catalog_last_call = 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -307,9 +310,21 @@ def search_spotify_albums_catalog(
     Search Spotify albums with an app token.
     Returns a list of raw album items (or empty list on failure).
     """
+    global _catalog_backoff_until, _catalog_last_call
+
     token = get_spotify_app_access_token()
     if not token:
         return []
+
+    now = time.time()
+    if _catalog_backoff_until and now < _catalog_backoff_until:
+        sleep_for = _catalog_backoff_until - now
+        logger.info("[spotify] catalog search backing off for %.2fs", sleep_for)
+        time.sleep(sleep_for)
+
+    elapsed = now - _catalog_last_call
+    if elapsed < _catalog_min_interval:
+        time.sleep(_catalog_min_interval - elapsed)
 
     q_album = (album_name or "").replace('"', "")
     q_artist = (artist_name or "").replace('"', "")
@@ -330,6 +345,7 @@ def search_spotify_albums_catalog(
             params=params,
             timeout=10,
         )
+        _catalog_last_call = time.time()
     except Exception as exc:  # noqa: BLE001 - log and skip
         logger.info("[spotify] catalog search failed for %r / %r: %s", album_name, artist_name, exc)
         return []
@@ -338,6 +354,21 @@ def search_spotify_albums_catalog(
         # Token expired or invalid; clear cache and let caller retry if desired.
         _app_token_cache.clear()
         logger.info("[spotify] catalog search unauthorized; cleared token cache")
+        return []
+
+    if resp.status_code == 429:
+        retry_after_header = resp.headers.get("Retry-After")
+        try:
+            retry_after = float(retry_after_header) if retry_after_header else 1.0
+        except ValueError:
+            retry_after = 1.0
+
+        _catalog_backoff_until = time.time() + max(retry_after, 1.0)
+        logger.info(
+            "[spotify] catalog rate limited; status=429 retry_after=%s backoff_until=%.2f",
+            retry_after_header,
+            _catalog_backoff_until,
+        )
         return []
 
     if resp.status_code >= 400:

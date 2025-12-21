@@ -1,6 +1,6 @@
 """Synchronous MusicBrainz DB helpers (PostgreSQL)."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -17,7 +17,13 @@ def get_mb_connection():
     """
     if not settings.MB_DATABASE_URL:
         raise RuntimeError("MB_DATABASE_URL is not set but MB_SOURCE='db'")
-    return psycopg2.connect(settings.MB_DATABASE_URL, cursor_factory=RealDictCursor)
+    conn = psycopg2.connect(settings.MB_DATABASE_URL, cursor_factory=RealDictCursor)
+    # Avoid indefinitely hanging queries; default to 8s unless overridden via env.
+    timeout_ms = max(int(getattr(settings, "MB_DB_STATEMENT_TIMEOUT_MS", 8000) or 0), 0)
+    if timeout_ms:
+        with conn.cursor() as cur:
+            cur.execute(f"SET statement_timeout TO {timeout_ms}")
+    return conn
 
 
 def _fetch_all(query: str, params: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -201,3 +207,108 @@ def get_artist_release_groups_db(
             }
         )
     return release_groups
+
+
+# ---------------------------------------------------------------------------
+# Taste profile helpers
+# ---------------------------------------------------------------------------
+
+
+def upsert_artist_spotify_genres(artist_id: int, spotify_genres: Sequence[str]) -> None:
+    """
+    Insert or update Spotify genres for a MusicBrainz artist_id.
+    """
+    genres_clean = []
+    for g in spotify_genres:
+        if not g:
+            continue
+        cleaned = str(g).strip().lower()
+        if cleaned:
+            genres_clean.append(cleaned)
+
+    with get_mb_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO public.artist_spotify_genres_v1 (artist_id, spotify_genres)
+                VALUES (%s, %s)
+                ON CONFLICT (artist_id)
+                DO UPDATE SET
+                    spotify_genres = EXCLUDED.spotify_genres,
+                    updated_at = NOW();
+                """,
+                (artist_id, genres_clean),
+            )
+
+
+def fetch_user_top_clusters(user_id: str, top_n: int = 3) -> List[Dict[str, Any]]:
+    """
+    Return top-N clusters for a user from user_taste_clusters_v1.
+    """
+    if not user_id:
+        return []
+
+    with get_mb_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT user_id, cluster_id, weight
+                FROM public.user_taste_clusters_v1
+                WHERE user_id = %s
+                ORDER BY weight DESC
+                LIMIT %s;
+                """,
+                (user_id, top_n),
+            )
+            return list(cur.fetchall() or [])
+
+
+def fetch_artist_primary_clusters(artist_ids: Sequence[int]) -> Dict[int, Dict[str, Any]]:
+    """
+    For each artist_id, return the highest-weight cluster from artist_cluster_profile_v1.
+    """
+    if not artist_ids:
+        return {}
+
+    with get_mb_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                """
+                WITH ranked AS (
+                    SELECT
+                        artist_id,
+                        cluster_id,
+                        cluster_weight,
+                        ROW_NUMBER() OVER (PARTITION BY artist_id ORDER BY cluster_weight DESC) AS rn
+                    FROM public.artist_cluster_profile_v1
+                    WHERE artist_id = ANY(%s)
+                )
+                SELECT artist_id, cluster_id, cluster_weight
+                FROM ranked
+                WHERE rn = 1;
+                """,
+                (list(artist_ids),),
+            )
+            rows = cur.fetchall() or []
+            return {int(r["artist_id"]): r for r in rows}
+
+
+def fetch_cluster_labels(cluster_ids: Sequence[int]) -> Dict[int, Dict[str, Any]]:
+    """
+    Return cluster labels from cluster_labels_spotify_v1 for the given clusters.
+    """
+    if not cluster_ids:
+        return {}
+
+    with get_mb_connection() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT cluster_id, label_primary, label_secondary, top_spotify_genres
+                FROM public.cluster_labels_spotify_v1
+                WHERE cluster_id = ANY(%s);
+                """,
+                (list(cluster_ids),),
+            )
+            rows = cur.fetchall() or []
+            return {int(r["cluster_id"]): r for r in rows}

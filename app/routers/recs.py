@@ -1,13 +1,17 @@
 """Album recommendation endpoints backed by DB function calls."""
 
-from typing import List
+from typing import List, Dict, Any
 import re
+import time
 
 from fastapi import APIRouter, HTTPException, Request
 from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 
-from app.data.musicbrainz_db import get_mb_connection
+from app.data.musicbrainz_db import (
+    get_mb_connection,
+    upsert_artist_spotify_genres,
+)
 from app.services.sonic_tags import fetch_musicbrainz_artist_full
 from app.services.spotify_enrichment import enrich_albums_with_spotify
 from app.utils.config import SESSION_COOKIE_NAME, SESSIONS
@@ -46,20 +50,16 @@ class AddArtistPayload(BaseModel):
     name: str
 
 
-@router.get("/albums")
-def get_album_recommendations(
-    seeds: str,
-    k: int = 50,
-    window_years: int = 1,
-    min_tracks: int = 3,
-    max_per_tag: int = 2,
-    enrich_spotify: bool = True,
-):
+def run_album_recs_query(
+    seeds: List[int],
+    k: int,
+    window_years: int,
+    min_tracks: int,
+    max_per_tag: int,
+) -> List[Dict[str, Any]]:
     """
-    Proxy to the DB function public.get_album_recs_v1.
+    Shared executor for public.get_album_recs_v1.
     """
-    seed_ids = _parse_seed_ids(seeds)
-
     query = """
     SELECT *
     FROM public.get_album_recs_v1(
@@ -82,9 +82,9 @@ def get_album_recommendations(
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     query,
-                    (seed_ids, k, window_years, min_tracks, max_per_tag),
+                    (seeds, k, window_years, min_tracks, max_per_tag),
                 )
-                rows = cur.fetchall()
+                return list(cur.fetchall() or [])
     except HTTPException:
         raise
     except Exception as exc:
@@ -92,6 +92,75 @@ def get_album_recommendations(
         raise HTTPException(status_code=500, detail="Database error during album recommendation")
     finally:
         conn.close()
+
+
+def resolve_mb_artists_from_spotify(artists: List[SimpleArtist]) -> tuple[list[int], list[str], list[str]]:
+    """
+    Resolve Spotify artists to MusicBrainz internal IDs and persist their Spotify genres.
+
+    Returns:
+        seeds_ordered: list of resolved MB artist_ids (may contain duplicates for logging)
+        resolved_names: names that resolved
+        missed_names: names that missed
+    """
+    mb_numeric_ids: List[int] = []
+    resolved_names: List[str] = []
+    missed_names: List[str] = []
+
+    for artist in artists:
+        t0 = time.time()
+        try:
+            mb_artist = fetch_musicbrainz_artist_full(artist.name)
+        except Exception as exc:  # noqa: BLE001 - surface errors
+            logger.warning("MB lookup failed for '%s': %s", artist.name, exc)
+            continue
+
+        if not mb_artist:
+            missed_names.append(artist.name)
+            continue
+
+        internal_id = mb_artist.get("mb_internal_id")
+        if isinstance(internal_id, int):
+            mb_numeric_ids.append(internal_id)
+            resolved_names.append(artist.name)
+            try:
+                upsert_artist_spotify_genres(internal_id, artist.genres or [])
+            except Exception as exc:  # noqa: BLE001 - best-effort
+                logger.info("Failed to upsert Spotify genres for %s (%s): %s", artist.name, internal_id, exc)
+        else:
+            missed_names.append(artist.name)
+
+        logger.debug(
+            "[RECS] MB lookup %.3fs for '%s' -> %s",
+            time.time() - t0,
+            artist.name,
+            "hit" if mb_artist else "miss",
+        )
+
+    return mb_numeric_ids, resolved_names, missed_names
+
+
+@router.get("/albums")
+def get_album_recommendations(
+    seeds: str,
+    k: int = 50,
+    window_years: int = 1,
+    min_tracks: int = 3,
+    max_per_tag: int = 2,
+    enrich_spotify: bool = True,
+):
+    """
+    Proxy to the DB function public.get_album_recs_v1.
+    """
+    seed_ids = _parse_seed_ids(seeds)
+
+    rows = run_album_recs_query(
+        seeds=seed_ids,
+        k=k,
+        window_years=window_years,
+        min_tracks=min_tracks,
+        max_per_tag=max_per_tag,
+    )
 
     rows = enrich_albums_with_spotify(rows, enrich_spotify=enrich_spotify, max_items=50)
     return rows
@@ -115,20 +184,7 @@ def get_album_recommendations_from_spotify(
 
     logger.info("[RECS] from-spotify received %d artists", len(artists))
 
-    mb_numeric_ids: List[int] = []
-    for artist in artists:
-        try:
-            mb_artist = fetch_musicbrainz_artist_full(artist.name)
-        except Exception as exc:  # noqa: BLE001 - surface errors
-            logger.warning("MB lookup failed for '%s': %s", artist.name, exc)
-            continue
-
-        if not mb_artist:
-            continue
-
-        internal_id = mb_artist.get("mb_internal_id")
-        if isinstance(internal_id, int):
-            mb_numeric_ids.append(internal_id)
+    mb_numeric_ids, resolved_names, missed_names = resolve_mb_artists_from_spotify(artists)
 
     # Dedup while preserving order
     seen = set()
@@ -139,43 +195,25 @@ def get_album_recommendations_from_spotify(
         seen.add(sid)
         seeds_ordered.append(sid)
 
-    logger.info("[RECS] resolved %d seeds (unique)", len(seeds_ordered))
+    logger.info(
+        "[RECS] resolved %d/%d seeds (unique=%d) sample=%s missed=%d",
+        len(resolved_names),
+        len(artists),
+        len(seeds_ordered),
+        resolved_names[:5],
+        len(missed_names),
+    )
 
     if not seeds_ordered:
         raise HTTPException(status_code=400, detail="No MusicBrainz artist IDs resolved from input artists")
 
-    query = """
-    SELECT *
-    FROM public.get_album_recs_v1(
-      %s::int[],
-      %s::int,
-      %s::int,
-      %s::int,
-      %s::int
-    );
-    """
-
-    try:
-        conn = get_mb_connection()
-    except Exception as exc:
-        logger.error("DB connection error: %s", exc)
-        raise HTTPException(status_code=500, detail="Database connection error")
-
-    try:
-        with conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute(
-                    query,
-                    (seeds_ordered, k, window_years, min_tracks, max_per_tag),
-                )
-                rows = cur.fetchall()
-    except HTTPException:
-        raise
-    except Exception as exc:
-        logger.error("DB error executing get_album_recs_v1: %s", exc)
-        raise HTTPException(status_code=500, detail="Database error during album recommendation")
-    finally:
-        conn.close()
+    rows = run_album_recs_query(
+        seeds=seeds_ordered,
+        k=k,
+        window_years=window_years,
+        min_tracks=min_tracks,
+        max_per_tag=max_per_tag,
+    )
 
     rows = enrich_albums_with_spotify(rows, enrich_spotify=enrich_spotify, max_items=50)
 
@@ -211,38 +249,13 @@ def get_album_recommendations_for_added_artist(
 
     seed_ids = [mb_artist["mb_internal_id"]]
 
-    query = """
-    SELECT *
-    FROM public.get_album_recs_v1(
-      %s::int[],
-      %s::int,
-      %s::int,
-      %s::int,
-      %s::int
-    );
-    """
-
-    try:
-        conn = get_mb_connection()
-    except Exception as exc:
-        logger.error("DB connection error: %s", exc)
-        raise HTTPException(status_code=500, detail="Database connection error")
-
-    try:
-        with conn:
-            with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                cur.execute(
-                    query,
-                    (seed_ids, k, window_years, min_tracks, max_per_tag),
-                )
-                rows = cur.fetchall()
-    except HTTPException:
-        raise
-    except Exception as exc:
-        logger.error("DB error executing get_album_recs_v1 (add-artist): %s", exc)
-        raise HTTPException(status_code=500, detail="Database error during album recommendation")
-    finally:
-        conn.close()
+    rows = run_album_recs_query(
+        seeds=seed_ids,
+        k=k,
+        window_years=window_years,
+        min_tracks=min_tracks,
+        max_per_tag=max_per_tag,
+    )
 
     rows = enrich_albums_with_spotify(rows, enrich_spotify=enrich_spotify, max_items=50)
 
