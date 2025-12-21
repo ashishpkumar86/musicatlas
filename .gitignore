@@ -35,3 +35,29 @@ node_modules/
 music-atlas-frontend-v3/.next/
 music-atlas-frontend-v3/node_modules/
 .env.example
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Vim swap files
+*.swp
+*.swo
+*.swx
+
+# macOS
+.DS_Store
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+
+# Vim swap files
+*.swp
+*.swo
+*.swx
