@@ -14,6 +14,7 @@ from app.data.musicbrainz_db import (
     fetch_cluster_labels,
     fetch_user_top_clusters,
 )
+from app.services.spotify_enrichment import enrich_albums_with_spotify
 from app.routers.auth import get_current_session
 from app.routers.recs import SimpleArtist, resolve_mb_artists_from_spotify, run_album_recs_query
 from app.utils.config import SESSION_COOKIE_NAME, SESSIONS
@@ -28,6 +29,7 @@ STRONG_THRESHOLD = 20
 MODERATE_THRESHOLD = 10
 MIN_CLUSTER_SHARE = 0.03
 CUM_SHARE_TARGET = 0.85
+TASTE_ENRICH_MAX_ITEMS = 25
 
 
 def _strength_label(album_count: int) -> str:
@@ -100,6 +102,8 @@ def taste_profile(request: Request, validate: bool = False):
             min_tracks=3,
             max_per_tag=2,
         )
+        # Limit Spotify catalog calls to keep the response under proxy timeouts.
+        albums = enrich_albums_with_spotify(albums, enrich_spotify=True, max_items=TASTE_ENRICH_MAX_ITEMS)
 
         if session_store is not None:
             session_store["album_recs"] = albums

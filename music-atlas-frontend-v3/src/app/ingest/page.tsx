@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { SourceLoginPanel } from '@/components/source-login-panel';
-import { apiBase } from '@/lib/api';
 
 export default function IngestPage() {
   return (
@@ -12,7 +11,7 @@ export default function IngestPage() {
           <p className="text-xs uppercase tracking-[0.25em] text-textMuted">Seeds and sessions</p>
           <h2 className="text-3xl font-semibold text-textPrimary">Connect Spotify and TIDAL</h2>
           <p className="text-sm text-textMuted">
-            Uses the same login endpoints as the existing frontend. Backend base URL: {apiBase}
+            Uses the same login endpoints as the existing frontend. Calls go through same-origin <code>/api/*</code>.
           </p>
         </div>
         <Link href="/" className="text-sm text-accent hover:text-accentMuted">

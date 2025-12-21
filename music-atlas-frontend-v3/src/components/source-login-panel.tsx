@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { apiBase, apiFetch } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 
 type SpotifyTopItem = {
   id: string;
@@ -59,18 +59,18 @@ export const SourceLoginPanel = () => {
   const [error, setError] = useState<string | null>(null);
 
   const handleLogin = (provider: 'spotify' | 'tidal') => {
-    window.location.href = `${apiBase}/auth/${provider}/login`;
+    window.location.href = `/api/auth/${provider}/login`;
   };
 
   const loadSpotifyTop = useCallback(async () => {
     setSpotifyStatus('loading');
     try {
-      const payload = await apiFetch<{ items: SpotifyTopItem[] }>('/spotify/top-artists?limit=20');
+      const payload = await apiFetch<{ items: SpotifyTopItem[] }>('/api/spotify/top-artists?limit=20');
       const items = payload.items || [];
       const detailed = await Promise.all(
         items.map(async (artist) => {
           try {
-            const resp = await apiFetch<SpotifyArtistDetail>(`/spotify/artist/${encodeURIComponent(artist.id)}`);
+            const resp = await apiFetch<SpotifyArtistDetail>(`/api/spotify/artist/${encodeURIComponent(artist.id)}`);
             return resp;
           } catch (err) {
             console.warn('Failed to load Spotify artist detail', artist.id, err);
@@ -93,7 +93,7 @@ export const SourceLoginPanel = () => {
       const data = await apiFetch<{
         data: { id: string }[];
         included?: { id: string | number; type: string; attributes?: { name?: string; imageUrl?: string | null } }[];
-      }>('/tidal/favorites/artists?limit=50');
+      }>('/api/tidal/favorites/artists?limit=50');
 
       const rawItems = data.data || [];
       const artistResources = (data.included || []).filter((res) => res.type === 'artists');
@@ -124,7 +124,7 @@ export const SourceLoginPanel = () => {
       const setter = provider === 'spotify' ? setSpotifyStatus : setTidalStatus;
       try {
         setter('loading');
-        const session = await apiFetch<SessionResponse>(`/auth/${provider}/session`);
+        const session = await apiFetch<SessionResponse>(`/api/auth/${provider}/session`);
         if (session.logged_in) {
           if (provider === 'spotify') await loadSpotifyTop();
           else await loadTidalFavorites();

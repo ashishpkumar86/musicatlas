@@ -31,7 +31,7 @@ export function ArtistSearch() {
     setResult(null);
 
     try {
-      const data = await apiFetch<EnrichedArtist>(`/mb/artist/enriched/by-name?name=${encodeURIComponent(trimmed)}`);
+      const data = await apiFetch<EnrichedArtist>(`/api/mb/artist/enriched/by-name?name=${encodeURIComponent(trimmed)}`);
       setResult(data);
       setStatus('ready');
     } catch (err) {

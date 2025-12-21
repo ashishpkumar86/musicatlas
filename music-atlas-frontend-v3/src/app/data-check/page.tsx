@@ -215,10 +215,10 @@ export default function DataCheckPage() {
   const loadSpotify = async () => {
     setSpotifyStatus('loading');
     try {
-      const data = await apiFetch<SpotifySession>('/auth/spotify/session');
+      const data = await apiFetch<SpotifySession>('/api/auth/spotify/session');
       setSpotifySession(data);
       if (data.logged_in) {
-        const top = await apiFetch<{ items: SpotifyArtist[] }>('/spotify/top-artists?limit=20');
+        const top = await apiFetch<{ items: SpotifyArtist[] }>('/api/spotify/top-artists?limit=20');
         setSpotifyArtists(top.items || []);
       } else {
         setSpotifyArtists([]);
@@ -256,7 +256,7 @@ export default function DataCheckPage() {
     }
 
     try {
-      const data = await apiFetch<{ tag_cloud?: SonicTag[] }>('/user/sonic-tags', {
+      const data = await apiFetch<{ tag_cloud?: SonicTag[] }>('/api/user/sonic-tags', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
