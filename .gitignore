@@ -61,5 +61,13 @@ __pycache__/
 *.swp
 *.swo
 *.swx
+<<<<<<< Updated upstream
 Caddyfile.dev
 
+=======
+
+# Local exports (do not commit)
+cluster_summary_v1.csv
+tag_clusters_v1.csv
+tag_tag_npmi_pos_v1.csv
+>>>>>>> Stashed changes
