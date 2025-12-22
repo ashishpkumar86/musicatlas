@@ -48,22 +48,46 @@ def search_artists_by_name_db(
     """
     Search artists in the MusicBrainz DB by name or alias.
     """
+    logger.debug("[MB DB] search artists strategy=%s term=%s", settings.MB_SOURCE, query)
     rows = _fetch_all(
         """
-        SELECT DISTINCT ON (a.id)
-            a.id,
-            a.gid,
-            a.name,
-            a.sort_name,
-            a.type,
-            a.area,
-            a.begin_date_year,
-            a.end_date_year
-        FROM artist a
-        LEFT JOIN artist_alias aa ON aa.artist = a.id
-        WHERE a.name ILIKE %(q)s
-           OR aa.name ILIKE %(q)s
-        ORDER BY a.id
+        WITH candidates AS (
+            SELECT
+                a.id,
+                a.gid,
+                a.name,
+                a.sort_name,
+                a.type,
+                a.area,
+                a.begin_date_year,
+                a.end_date_year
+            FROM public.artist a
+            WHERE a.name ILIKE %(q)s
+            UNION ALL
+            SELECT
+                a.id,
+                a.gid,
+                a.name,
+                a.sort_name,
+                a.type,
+                a.area,
+                a.begin_date_year,
+                a.end_date_year
+            FROM public.artist a
+            JOIN public.artist_alias aa ON aa.artist = a.id
+            WHERE aa.name ILIKE %(q)s
+        )
+        SELECT DISTINCT ON (id)
+            id,
+            gid,
+            name,
+            sort_name,
+            type,
+            area,
+            begin_date_year,
+            end_date_year
+        FROM candidates
+        ORDER BY id
         LIMIT %(limit)s
         OFFSET %(offset)s;
         """,

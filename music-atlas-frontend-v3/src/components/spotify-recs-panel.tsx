@@ -51,6 +51,26 @@ type TasteProfileResponse = {
   validation?: unknown;
 };
 
+type JobProgress = {
+  stage?: string | null;
+  counts?: Record<string, number>;
+};
+
+type JobCreatedResponse = {
+  job_id: string;
+  status: string;
+  status_url: string;
+  result_url: string;
+  progress?: JobProgress;
+};
+
+type JobStatusResponse = {
+  job_id: string;
+  status: 'queued' | 'running' | 'done' | 'error';
+  progress?: JobProgress;
+  error?: string | null;
+};
+
 type AlbumRecsPayload =
   | AlbumRec[]
   | {
@@ -89,6 +109,8 @@ type RecsState = {
   lastSuccessfulAt?: number | null;
   addedAlbums: AlbumRec[];
   addedArtistName?: string;
+  jobId?: string | null;
+  progress?: JobProgress | null;
 };
 
 type UiState = {
@@ -97,7 +119,8 @@ type UiState = {
   artistsPanelExpanded: boolean;
 };
 
-const RECS_TIMEOUT_MS = 45_000;
+const RECS_TIMEOUT_MS = 300_000;
+const JOB_POLL_INTERVAL_MS = 1_000;
 const ADDED_BUCKET_ID = '__added__';
 const normalizePopularity = (value: unknown) => {
   if (value === null || value === undefined) return null;
@@ -117,6 +140,30 @@ const isTimeoutLike = (error: unknown) => {
   if (error instanceof ApiError && (error.status === 504 || /timeout/i.test(error.message))) return true;
   if (error instanceof Error) return /timeout|network|ECONNRESET/i.test(error.message);
   return false;
+};
+
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+const describeStage = (stage?: string | null) => {
+  if (!stage) return '';
+  switch (stage) {
+    case 'queued':
+      return 'Queued';
+    case 'resolving_seeds':
+      return 'Resolving artists';
+    case 'resolved':
+      return 'Resolved artists';
+    case 'fetching_recs':
+      return 'Fetching recommendations';
+    case 'enriching_spotify':
+      return 'Enriching with Spotify';
+    case 'done':
+      return 'Finalizing';
+    case 'error':
+      return 'Failed';
+    default:
+      return stage.replace(/_/g, ' ');
+  }
 };
 
 const bucketKey = (bucket: TasteBucket) => {
@@ -272,7 +319,9 @@ export function SpotifyRecsPanel() {
     startedAt: null,
     lastSuccessfulAt: null,
     addedAlbums: [],
-    addedArtistName: undefined
+    addedArtistName: undefined,
+    jobId: null,
+    progress: null
   });
   const [ui, setUi] = useState<UiState>({
     selectedBucketId: undefined,
@@ -285,6 +334,7 @@ export function SpotifyRecsPanel() {
   const recsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const primedRef = useRef(false);
   const [, forceTick] = useState(0);
+  const stageText = describeStage(recs.progress?.stage);
 
   useEffect(() => {
     const timer = setInterval(() => forceTick((v) => v + 1), 1000);
@@ -359,14 +409,53 @@ export function SpotifyRecsPanel() {
       status: 'loading',
       error: undefined,
       startedAt: Date.now(),
+      jobId: null,
+      progress: { stage: 'queued', counts: { artists: seeds.artists.length } },
       addedAlbums: [],
       addedArtistName: undefined
     }));
     try {
-      const payload = await apiFetch<AlbumRecsPayload>('/api/recs/albums/from-spotify', {
+      const job = await apiFetch<JobCreatedResponse>('/api/recs/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(seedsPayload(seeds.artists)),
+        signal: controller.signal
+      });
+      setRecs((prev) => ({
+        ...prev,
+        jobId: job.job_id,
+        progress: job.progress || prev.progress
+      }));
+
+      const pollJob = async () => {
+        while (true) {
+          if (controller.signal.aborted) {
+            throw new Error('Polling aborted');
+          }
+          const statusPayload = await apiFetch<JobStatusResponse>(`/api/recs/jobs/${job.job_id}`, {
+            signal: controller.signal
+          });
+          setRecs((prev) => ({
+            ...prev,
+            jobId: job.job_id,
+            progress: statusPayload.progress || prev.progress,
+            status: statusPayload.status === 'error' ? 'error' : prev.status,
+            error:
+              statusPayload.status === 'error' ? formatErrorMessage(statusPayload.error || 'Job failed') : prev.error
+          }));
+          if (statusPayload.status === 'done') {
+            break;
+          }
+          if (statusPayload.status === 'error') {
+            throw new Error(statusPayload.error || 'Job failed');
+          }
+          await wait(JOB_POLL_INTERVAL_MS);
+        }
+      };
+
+      await pollJob();
+
+      const payload = await apiFetch<AlbumRecsPayload>(`/api/recs/jobs/${job.job_id}/result`, {
         signal: controller.signal
       });
       const normalized = normalizeRecsResponse(payload);
@@ -378,7 +467,9 @@ export function SpotifyRecsPanel() {
         startedAt: prev.startedAt,
         lastSuccessfulAt: Date.now(),
         addedAlbums: [],
-        addedArtistName: undefined
+        addedArtistName: undefined,
+        jobId: job.job_id,
+        progress: { stage: 'done', counts: { albums: normalized.rawAlbums.length } }
       }));
       if (taste.status === 'idle') {
         fetchTaste();
@@ -391,7 +482,7 @@ export function SpotifyRecsPanel() {
         setRecs((prev) => ({
           ...prev,
           status: timeout ? 'timeout' : 'error',
-          error: formatErrorMessage(error)
+          error: prev.error || formatErrorMessage(error)
         }));
       }
     } finally {
@@ -579,25 +670,12 @@ export function SpotifyRecsPanel() {
     <div className="flex flex-col gap-5">
       <header className="sticky top-0 z-20 flex items-center justify-between rounded-2xl border border-white/5 bg-black/60 px-4 py-3 shadow-lg backdrop-blur">
         <div
-          className="flex items-center gap-2 text-lg font-semibold text-textPrimary tracking-tight"
+          className="flex items-center gap-2 text-[1.7rem] font-semibold text-textPrimary tracking-tight"
           style={{ fontFamily: '"IBM Plex Sans", "Inter", system-ui, -apple-system, sans-serif' }}
         >
           Music Atlas
-          <sup className="ml-1 align-super text-[0.65rem] font-semibold">®</sup>
         </div>
         <div className="flex items-center gap-2">
-          <span
-            className={`flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] ${
-              session.status === 'logged_in'
-                ? 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100'
-                : session.status === 'error'
-                  ? 'border-rose-400/30 bg-rose-500/10 text-rose-100'
-                  : 'border-white/10 bg-white/5 text-textMuted'
-            }`}
-          >
-            <span className="h-2 w-2 rounded-full bg-current" />
-            {sessionLabel}
-          </span>
           {session.status !== 'logged_in' ? (
             <button
               onClick={() => {
@@ -607,14 +685,7 @@ export function SpotifyRecsPanel() {
             >
               Log in with Spotify
             </button>
-          ) : (
-            <button
-              onClick={checkSession}
-              className="rounded-full border border-white/10 px-3 py-2 text-[11px] font-semibold text-textMuted transition hover:border-accent hover:text-textPrimary"
-            >
-              Refresh session
-            </button>
-          )}
+          ) : null}
         </div>
       </header>
 
@@ -701,7 +772,9 @@ export function SpotifyRecsPanel() {
                 <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
                 <span className="h-2 w-2 animate-pulse rounded-full bg-accent" style={{ animationDelay: '0.15s' }} />
                 <span className="h-2 w-2 animate-pulse rounded-full bg-accent" style={{ animationDelay: '0.3s' }} />
-                <span>Updating recommendations…</span>
+                <span>
+                  {stageText ? `Updating recommendations - ${stageText}` : 'Updating recommendations…'}
+                </span>
               </div>
             ) : null}
 
@@ -791,6 +864,15 @@ export function SpotifyRecsPanel() {
                       ) : null}
                     </div>
                   ) : null}
+                </div>
+              ) : recs.status === 'loading' ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <button className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-textMuted">
+                    All
+                  </button>
+                  <span className="text-xs text-textMuted">
+                    {stageText ? `${stageText}…` : 'Building recommendations…'}
+                  </span>
                 </div>
               ) : (
                 <div className="flex flex-wrap items-center gap-2">
